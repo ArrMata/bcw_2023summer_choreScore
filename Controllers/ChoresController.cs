@@ -6,10 +6,12 @@ namespace bcw_2023summer_choreScore.Controllers
     {
 
         private readonly ChoresService _choresService;
+        private readonly Auth0Provider _auth0Provider;
 
-        public ChoresController(ChoresService choresService)
+        public ChoresController(ChoresService choresService, Auth0Provider auth0Provider)
         {
             _choresService = choresService;
+            _auth0Provider = auth0Provider;
         }
 
         [HttpGet]
@@ -27,7 +29,7 @@ namespace bcw_2023summer_choreScore.Controllers
         }
 
         [HttpGet("{choreId}")]
-        public ActionResult<List<Chore>> GetChoreById(Guid choreId) 
+        public ActionResult<List<Chore>> GetChoreById(int choreId) 
         {
             try
             {
@@ -40,11 +42,14 @@ namespace bcw_2023summer_choreScore.Controllers
             }
         }
 
+        [Authorize]
         [HttpPost]
-        public ActionResult<Chore> CreateChore([FromBody] Chore choreData)
+        public async Task<ActionResult<Chore>> CreateChore([FromBody] Chore choreData)
         {
             try 
             {
+                Account userInfo = await _auth0Provider.GetUserInfoAsync<Account>(HttpContext);
+                choreData.CreatorId = userInfo.Id;
                 Chore chore = _choresService.CreateChore(choreData);
                 return Ok(chore);
             }
@@ -55,7 +60,7 @@ namespace bcw_2023summer_choreScore.Controllers
         }
 
         [HttpDelete("{choreId}")]
-        public ActionResult<string> DeleteChore(Guid choreId) 
+        public ActionResult<string> DeleteChore(int choreId) 
         {
             try
             {
@@ -69,7 +74,7 @@ namespace bcw_2023summer_choreScore.Controllers
         }
 
         [HttpPut("{choreId}")]
-        public ActionResult<Chore> EditChore([FromBody] Chore choreData, Guid choreId) 
+        public ActionResult<Chore> EditChore([FromBody] Chore choreData, int choreId) 
         {
             try
             {

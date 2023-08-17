@@ -11,24 +11,28 @@ namespace bcw_2023summer_choreScore.Services
 
         internal Chore CreateChore(Chore choreData)
         {
-            Chore chore = _choresRepository.CreateChore(choreData);
+            int choreId = _choresRepository.CreateChore(choreData);
+            Chore chore = GetChoreById(choreId);
             return chore;
         }
 
-        internal void DeleteChore(Guid choreId)
+        internal void DeleteChore(int choreId)
         {
             GetChoreById(choreId);
             _choresRepository.DeleteChore(choreId);
         }
 
-        internal Chore EditChore(Chore choreData, Guid choreId)
+        internal Chore EditChore(Chore choreData, int choreId)
         {
-            GetChoreById(choreId);
-            Chore chore = _choresRepository.EditChore(choreData, choreId);
-            return chore;
+            Chore originalChore = GetChoreById(choreId);
+            originalChore.Task = choreData.Task ?? originalChore.Task;
+            originalChore.Completed = choreData.Completed ?? originalChore.Completed;
+            _choresRepository.EditChore(originalChore);
+            Chore updatedChore = GetChoreById(choreId);
+            return updatedChore;
         }
 
-        internal Chore GetChoreById(Guid choreId)
+        internal Chore GetChoreById(int choreId)
         {
             Chore chore = _choresRepository.GetChoreById(choreId);
 

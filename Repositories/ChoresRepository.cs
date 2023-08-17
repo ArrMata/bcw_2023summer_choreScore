@@ -2,41 +2,81 @@ namespace bcw_2023summer_choreScore.Repositories
 {
     public class ChoresRepository
     {
-        private List<Chore> dbChores;
+        private readonly IDbConnection _db;
 
-        public ChoresRepository()
+        public ChoresRepository(IDbConnection db)
         {
-            dbChores = new List<Chore>();
+            _db = db;
         }
 
-        internal Chore CreateChore(Chore choreData)
+        internal int CreateChore(Chore choreData)
         {
-            dbChores.Add(choreData);
-            return choreData;
+            string sql = @"
+            INSERT INTO chores(task, completed, creatorId)
+            VALUES (@Task, @Completed, @CreatorId);
+            SELECT LAST_INSERT_ID()
+            ;";
+            int choreId = _db.ExecuteScalar<int>(sql, choreData);
+            return choreId;
         }
 
-        internal void DeleteChore(Guid choreId)
+        internal void DeleteChore(int choreId)
         {
-            Chore chore = GetChoreById(choreId);
-            dbChores.Remove(chore);
+            string sql = "DELETE FROM chores WHERE id = @ChoreId LIMIT 1;";
+            _db.Execute(sql, new { choreId });
         }
 
-        internal Chore EditChore(Chore choreData, Guid choreId)
+        internal void EditChore(Chore editedChore)
         {
-            Chore chore = GetChoreById(choreId);
-            chore.Task = choreData.Task ?? chore.Task;
-            chore.Completed = choreData.Completed != null ? choreData.Completed : chore.Completed;
-            return chore;
+            string sql = @"
+            UPDATE cars
+            SET
+            task = @Task,
+            completed = @Completed,
+            WHERE id = @Id
+            LIMIT 1;
+            ;";
+            _db.Execute(sql, editedChore);
         }
 
-        internal Chore GetChoreById(Guid choreId)
+        internal Chore GetChoreById(int choreId)
         {
-            Chore chore = dbChores.Find(chore => chore.Id == choreId);
+            string sql = @"
+            SELECT 
+            chore.*,
+            acc.*
+            FROM chores chore
+            JOIN accounts acc ON acc.id = chore.creatorId
+            WHERE chore.id = @ChoreId LIMIT 1
+            ;";
+            Chore chore = _db.Query<Chore, Profile, Chore>(sql, 
+            (chore, profile) => {
+                chore.Creator = profile;
+                return chore;
+            },
+            new { choreId }).FirstOrDefault();
             return chore;
         }
 
         internal List<Chore> GetChores() {
-            return dbChores;
+            string sql = @"
+            SELECT 
+            chore.*,
+            acc.*
+            FROM chores chore
+            JOIN accounts acc ON acc.id = chore.creatorId
+            ;";
+
+            List<Chore> chores = _db.Query<Chore, Profile, Chore>(
+                sql, 
+                (chore, profile) => 
+                {
+                    chore.Creator = profile;
+                    return chore;
+                }
+                ).ToList();
+
+            return chores;
         }
 
     }

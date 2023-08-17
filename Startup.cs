@@ -22,7 +22,7 @@ public class Startup
   public void ConfigureServices(IServiceCollection services)
   {
     ConfigureCors(services);
-    // ConfigureAuth(services);
+    ConfigureAuth(services);
     services.AddControllers();
     services.AddSwaggerGen(c =>
     {
@@ -34,7 +34,7 @@ public class Startup
     services.AddScoped<AccountsRepository>();
     services.AddScoped<AccountService>();
 
-    services.AddSingleton<ChoresRepository>();
+    services.AddScoped<ChoresRepository>();
     services.AddScoped<ChoresService>();
   }
 
